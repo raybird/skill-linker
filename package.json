@@ -1,0 +1,40 @@
+{
+  "name": "skill-linker",
+  "version": "1.0.0",
+  "description": "Interactive CLI to link AI Agent Skills to various agents (Claude, Copilot, Antigravity, Cursor, etc.)",
+  "main": "bin/cli.js",
+  "bin": {
+    "skill-linker": "./bin/cli.js"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "skill",
+    "claude",
+    "copilot",
+    "cursor",
+    "antigravity",
+    "windsurf",
+    "opencode",
+    "codex",
+    "gemini",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raybird/skill-installer.git"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "bin/",
+    "link-skill.sh",
+    "README.md"
+  ]
+}
