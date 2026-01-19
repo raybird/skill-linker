@@ -47,6 +47,29 @@ Examples:
   ./link-skill.sh                           # 互動式選擇
   ./link-skill.sh /path/to/skill            # 指定本地 Skill
   ./link-skill.sh --from https://github.com/user/my-skill
+  ./link-skill.sh --from https://github.com/anthropics/skills/tree/main/skills/pdf
+```
+
+### Multi-Skill Repo 支援
+
+對於包含多個 Skills 的 Repo（如 `anthropics/skills`），腳本會：
+1. 自動偵測 `skills/` 子目錄
+2. 列出所有可用的 Skills 讓您選擇
+3. 或者您可以直接在 URL 中指定子路徑（如 `/tree/main/skills/pdf`）
+
+## 📦 推薦的 Public Skill Repos
+
+| Repo | 說明 |
+|------|------|
+| [anthropics/skills](https://github.com/anthropics/skills) | Claude 官方 Skills (pdf, docx, pptx, xlsx...) |
+| [obra/superpowers](https://github.com/obra/superpowers) | 開發流程 Skills (TDD, debugging, code-review...) |
+
+```bash
+# 安裝 Anthropic 的 PDF Skill
+npx skill-linker --from https://github.com/anthropics/skills/tree/main/skills/pdf
+
+# 安裝 obra 的所有開發 Skills (可互動選擇)
+npx skill-linker --from https://github.com/obra/superpowers
 ```
 
 ## 📂 Skill Library
@@ -56,7 +79,7 @@ Examples:
 ```bash
 mkdir -p ~/Documents/AgentSkills
 cd ~/Documents/AgentSkills
-git clone https://github.com/user/my-awesome-skill.git
+git clone https://github.com/anthropics/skills.git
 ```
 
 腳本會自動偵測此目錄並列出可用的 Skills。

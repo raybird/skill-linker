@@ -24,6 +24,11 @@ show_help() {
     echo "  ./link-skill.sh                           # Interactive selection from library"
     echo "  ./link-skill.sh /path/to/skill            # Link specific local skill"
     echo "  ./link-skill.sh --from https://github.com/user/my-skill"
+    echo "  ./link-skill.sh --from https://github.com/anthropics/skills/tree/main/skills/pdf"
+    echo ""
+    echo "Notes:"
+    echo "  - If the cloned repo has a 'skills/' subdirectory, you can pick a specific skill"
+    echo "  - GitHub URLs with /tree/branch/path are supported for direct subpath access"
     echo ""
     exit 0
 }
@@ -47,8 +52,21 @@ done
 
 # 1. Handle --from flag: Clone from GitHub
 if [ -n "$FROM_URL" ]; then
+    # Parse GitHub URL - check for /tree/branch/path format
+    SUBPATH=""
+    CLEAN_URL="$FROM_URL"
+    
+    if [[ "$FROM_URL" =~ (.+)/tree/([^/]+)/(.+)$ ]]; then
+        # URL contains /tree/branch/path - extract subpath
+        BASE_REPO="${BASH_REMATCH[1]}"
+        BRANCH="${BASH_REMATCH[2]}"
+        SUBPATH="${BASH_REMATCH[3]}"
+        CLEAN_URL="$BASE_REPO"
+        print_info "Detected subpath: $SUBPATH (branch: $BRANCH)"
+    fi
+    
     # Extract repo name from URL
-    REPO_NAME=$(basename "$FROM_URL" .git)
+    REPO_NAME=$(basename "$CLEAN_URL" .git)
     TARGET_CLONE_PATH="$DEFAULT_LIB_PATH/$REPO_NAME"
     
     # Ensure library directory exists
@@ -62,8 +80,8 @@ if [ -n "$FROM_URL" ]; then
             git -C "$TARGET_CLONE_PATH" pull
         fi
     else
-        print_info "Cloning $FROM_URL to $TARGET_CLONE_PATH..."
-        git clone "$FROM_URL" "$TARGET_CLONE_PATH"
+        print_info "Cloning $CLEAN_URL to $TARGET_CLONE_PATH..."
+        git clone "$CLEAN_URL" "$TARGET_CLONE_PATH"
         if [ $? -ne 0 ]; then
             print_error "Failed to clone repository"
             exit 1
@@ -71,7 +89,49 @@ if [ -n "$FROM_URL" ]; then
         print_success "Clone completed!"
     fi
     
-    SKILL_PATH="$TARGET_CLONE_PATH"
+    # If subpath was specified in URL, use it directly
+    if [ -n "$SUBPATH" ]; then
+        SKILL_PATH="$TARGET_CLONE_PATH/$SUBPATH"
+        if [ ! -d "$SKILL_PATH" ]; then
+            print_error "Subpath not found: $SKILL_PATH"
+            exit 1
+        fi
+    else
+        # Check if this is a multi-skill repo (has skills/ subdirectory)
+        SKILLS_DIR="$TARGET_CLONE_PATH/skills"
+        if [ -d "$SKILLS_DIR" ]; then
+            print_info "Detected multi-skill repository. Listing available skills..."
+            
+            sub_skills=("$SKILLS_DIR"/*/)
+            if [ ${#sub_skills[@]} -eq 0 ]; then
+                print_warning "No skills found in $SKILLS_DIR, using repo root"
+                SKILL_PATH="$TARGET_CLONE_PATH"
+            else
+                # Extract skill names for display
+                sub_skill_names=()
+                for s in "${sub_skills[@]}"; do
+                    sub_skill_names+=("$(basename "$s")")
+                done
+                
+                echo ""
+                echo "Available Skills in this repo:"
+                select sub_skill_name in "${sub_skill_names[@]}" "Link entire repo"; do
+                    if [ -n "$sub_skill_name" ]; then
+                        if [ "$sub_skill_name" == "Link entire repo" ]; then
+                            SKILL_PATH="$TARGET_CLONE_PATH"
+                        else
+                            SKILL_PATH="$SKILLS_DIR/$sub_skill_name"
+                        fi
+                        break
+                    else
+                        echo "Invalid selection. Please try again."
+                    fi
+                done
+            fi
+        else
+            SKILL_PATH="$TARGET_CLONE_PATH"
+        fi
+    fi
 fi
 
 # 2. Determine Source Skill Path (if not already set by --from)
