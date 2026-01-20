@@ -5,6 +5,7 @@
 DEFAULT_LIB_PATH="$HOME/Documents/AgentSkills"
 SKILL_PATH=""
 FROM_URL=""
+LIST_MODE=false
 
 # Helper function for colored output
 print_info() { echo -e "\033[1;34m[INFO]\033[0m $1"; }
@@ -18,6 +19,7 @@ show_help() {
     echo ""
     echo "Options:"
     echo "  --from <github_url>   Clone skill from GitHub URL first, then link"
+    echo "  --list                List cloned repos and select skills to link"
     echo "  --help                Show this help message"
     echo ""
     echo "Examples:"
@@ -33,12 +35,89 @@ show_help() {
     exit 0
 }
 
+# List repos function
+list_repos() {
+    if [ ! -d "$DEFAULT_LIB_PATH" ]; then
+        print_error "Skill Library not found: $DEFAULT_LIB_PATH"
+        print_info "Use --from <github_url> to clone skills first."
+        exit 1
+    fi
+    
+    # Find all repos (owner/repo structure)
+    repos=()
+    repo_paths=()
+    for owner_dir in "$DEFAULT_LIB_PATH"/*/; do
+        [ -d "$owner_dir" ] || continue
+        owner=$(basename "$owner_dir")
+        for repo_dir in "$owner_dir"*/; do
+            [ -d "$repo_dir" ] || continue
+            repo=$(basename "$repo_dir")
+            repos+=("$owner/$repo")
+            repo_paths+=("$repo_dir")
+        done
+    done
+    
+    if [ ${#repos[@]} -eq 0 ]; then
+        print_warning "No repos found in $DEFAULT_LIB_PATH"
+        print_info "Use --from <github_url> to clone skills first."
+        exit 0
+    fi
+    
+    echo ""
+    print_info "Cloned Repos in Skill Library:"
+    echo ""
+    select repo_name in "${repos[@]}"; do
+        if [ -n "$repo_name" ]; then
+            idx=$((REPLY - 1))
+            selected_repo_path="${repo_paths[$idx]}"
+            break
+        else
+            echo "Invalid selection. Please try again."
+        fi
+    done
+    
+    # Check for skills/ subdirectory
+    SKILLS_DIR="${selected_repo_path}skills"
+    if [ -d "$SKILLS_DIR" ]; then
+        print_info "Skills in $repo_name:"
+        sub_skills=("$SKILLS_DIR"/*/)
+        if [ ${#sub_skills[@]} -gt 0 ]; then
+            sub_skill_names=()
+            for s in "${sub_skills[@]}"; do
+                [ -d "$s" ] && sub_skill_names+=("$(basename "$s")")
+            done
+            
+            echo ""
+            select sub_skill_name in "${sub_skill_names[@]}" "Link entire repo"; do
+                if [ -n "$sub_skill_name" ]; then
+                    if [ "$sub_skill_name" == "Link entire repo" ]; then
+                        SKILL_PATH="${selected_repo_path%/}"
+                    else
+                        SKILL_PATH="$SKILLS_DIR/$sub_skill_name"
+                    fi
+                    break
+                else
+                    echo "Invalid selection. Please try again."
+                fi
+            done
+        else
+            SKILL_PATH="${selected_repo_path%/}"
+        fi
+    else
+        SKILL_PATH="${selected_repo_path%/}"
+    fi
+}
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --from)
             FROM_URL="$2"
             shift 2
+            ;;
+        --list|-l)
+            LIST_MODE=true
+            shift
             ;;
         --help|-h)
             show_help
@@ -49,6 +128,11 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Handle --list mode
+if [ "$LIST_MODE" = true ]; then
+    list_repos
+fi
 
 # 1. Handle --from flag: Clone from GitHub
 if [ -n "$FROM_URL" ]; then
@@ -65,9 +149,22 @@ if [ -n "$FROM_URL" ]; then
         print_info "Detected subpath: $SUBPATH (branch: $BRANCH)"
     fi
     
-    # Extract repo name from URL
-    REPO_NAME=$(basename "$CLEAN_URL" .git)
-    TARGET_CLONE_PATH="$DEFAULT_LIB_PATH/$REPO_NAME"
+    # Extract owner/repo from URL for namespaced storage
+    # Supports: https://github.com/owner/repo or https://github.com/owner/repo.git
+    if [[ "$CLEAN_URL" =~ github\.com[/:]([^/]+)/([^/]+)(\.git)?$ ]]; then
+        REPO_OWNER="${BASH_REMATCH[1]}"
+        REPO_NAME="${BASH_REMATCH[2]%.git}"
+    else
+        # Fallback: just use basename
+        REPO_OWNER=""
+        REPO_NAME=$(basename "$CLEAN_URL" .git)
+    fi
+    
+    if [ -n "$REPO_OWNER" ]; then
+        TARGET_CLONE_PATH="$DEFAULT_LIB_PATH/$REPO_OWNER/$REPO_NAME"
+    else
+        TARGET_CLONE_PATH="$DEFAULT_LIB_PATH/$REPO_NAME"
+    fi
     
     # Ensure library directory exists
     mkdir -p "$DEFAULT_LIB_PATH"
