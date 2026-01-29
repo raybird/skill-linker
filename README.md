@@ -9,7 +9,7 @@
 ## ✨ 功能特色
 
 - **現代化 TUI 介面**：使用 `prompts` 提供流暢的互動體驗。
-- **模糊搜尋 (Fuzzy Search)**：在選擇 Skill 時可輸入關鍵字快速過濾。
+- **模糊搜尋 (Fuzzy Search)**：在選擇 Repository 時，直接輸入文字即可即時過濾清單。
 - **智慧偵測**：自動偵測系統中已安裝的 Agent，並在選單中預設勾選。
 - **多 Agent 支援**：支援 Claude Code, GitHub Copilot, Antigravity, Cursor, Windsurf, OpenCode, Gemini CLI 等。
 - **雙重範圍 (Scope)**：可選擇安裝到當前 `專案目錄 (Project)` 或 `全域目錄 (Global)`。
