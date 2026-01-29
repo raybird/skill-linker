@@ -4,7 +4,7 @@
   "description": "Interactive CLI to link AI Agent Skills to various agents (Claude, Copilot, Antigravity, Cursor, etc.)",
   "main": "bin/cli.js",
   "bin": {
-    "skill-linker": "./bin/cli.js"
+    "skill-linker": "bin/cli.js"
   },
   "scripts": {
     "test": "echo \"No tests yet\""
