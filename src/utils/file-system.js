@@ -32,10 +32,12 @@ function ensureDir(dirPath) {
  */
 function createSymlink(source, target) {
     try {
-        // Remove existing link/file if present
-        if (fs.existsSync(target) || fs.lstatSync(target).isSymbolicLink()) {
-            fs.unlinkSync(target);
-        }
+        // Ensure parent directory exists
+        ensureDir(path.dirname(target));
+
+        // Remove existing link/file/directory if present
+        // force: true makes it ignore the error if file doesn't exist
+        fs.rmSync(target, { recursive: true, force: true });
 
         fs.symlinkSync(source, target, 'dir');
         return true;
