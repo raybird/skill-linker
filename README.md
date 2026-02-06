@@ -9,6 +9,7 @@
 ## ✨ 功能特色
 
 - **現代化 TUI 介面**：使用 `prompts` 提供流暢的互動體驗。
+- **智慧來源選擇**：執行 `npx skill-linker` 時自動偵測，可選擇從本地庫或 GitHub Clone。
 - **模糊搜尋 (Fuzzy Search)**：在選擇 Repository 時，直接輸入文字即可即時過濾清單。
 - **智慧偵測**：自動偵測系統中已安裝的 Agent，並在選單中預設勾選。
 - **多 Agent 支援**：支援 Claude Code, GitHub Copilot, Antigravity, Cursor, Windsurf, OpenCode, Gemini CLI 等。
@@ -21,7 +22,8 @@
 ### 方式 1：使用 npx (推薦)
 
 ```bash
-# 啟動互動式安裝介面 (選擇本地或新 Clone)
+# 啟動互動式安裝介面
+# 第一步會詢問：從本地庫選擇 或 從 GitHub Clone
 npx skill-linker
 
 # 瀏覽並從庫中 (AgentSkills/) 挑選已下載的 Skill
@@ -29,7 +31,7 @@ npx skill-linker list
 # 或使用縮寫
 npx skill-linker -l
 
-# 從 GitHub Clone 並安裝
+# 直接從 GitHub Clone 並安裝 (跳過來源選擇)
 npx skill-linker --from https://github.com/user/my-skill
 
 # 指定本地路徑 (如果是自己 clone 下來的指定目錄)

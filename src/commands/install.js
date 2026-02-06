@@ -80,71 +80,158 @@ async function install(options) {
     }
 
     if (skillPaths.length === 0) {
-        if (!dirExists(DEFAULT_LIB_PATH)) {
-            console.error(chalk.red('[ERROR]'), `Skill library not found: ${DEFAULT_LIB_PATH}`);
-            console.log(chalk.blue('[INFO]'), 'Use --from <github_url> to clone skills first.');
-            process.exit(1);
+        // First, ask user to choose source: local library or GitHub
+        const hasLocalLibrary = dirExists(DEFAULT_LIB_PATH) && findRepos(DEFAULT_LIB_PATH).length > 0;
+        
+        const sourceChoices = [
+            { title: 'Clone from GitHub', value: 'github' }
+        ];
+        
+        if (hasLocalLibrary) {
+            sourceChoices.unshift({ title: 'Select from local library', value: 'local' });
         }
-
-        const repos = findRepos(DEFAULT_LIB_PATH);
-
-        if (repos.length === 0) {
-            console.error(chalk.red('[ERROR]'), `No repos found in ${DEFAULT_LIB_PATH}`);
-            console.log(chalk.blue('[INFO]'), 'Use --from <github_url> to clone skills first.');
-            process.exit(1);
-        }
-
-        console.log('');
-
-        // 1. Select Repository
-        const { selectedRepo } = await prompts({
-            type: 'autocomplete',
-            name: 'selectedRepo',
-            message: 'Select a repository:',
-            choices: repos.map(repo => ({
-                title: `${repo.name}${repo.hasSkillsDir ? chalk.dim(' (has skills/)') : ''}`,
-                value: repo
-            })),
-            suggest: (input, choices) => {
-                const inputLower = input.toLowerCase();
-                return Promise.resolve(
-                    choices.filter(choice => choice.title.toLowerCase().includes(inputLower))
-                );
-            }
+        
+        const { source } = await prompts({
+            type: 'select',
+            name: 'source',
+            message: 'Where do you want to get skills from?',
+            choices: sourceChoices
         });
-
-        if (!selectedRepo) {
-            console.log(chalk.yellow('[WARNING]'), 'No repository selected. Exiting.');
+        
+        if (!source) {
+            console.log(chalk.yellow('[WARNING]'), 'No source selected. Exiting.');
             process.exit(0);
         }
-
-        // 2. Select Sub-skills (if applicable)
-        if (selectedRepo.hasSkillsDir) {
-            const skillsDir = path.join(selectedRepo.path, 'skills');
-            const subSkills = listDirectories(skillsDir);
-
-            if (subSkills.length > 0) {
-                const { selectedSubSkills } = await prompts({
-                    type: 'multiselect',
-                    name: 'selectedSubSkills',
-                    message: `Select skills from ${chalk.cyan(selectedRepo.name)} (Space to select):`,
-                    choices: [
-                        ...subSkills.map(s => ({ title: s, value: path.join(skillsDir, s) })),
-                        { title: 'Link entire repo', value: selectedRepo.path }
-                    ],
-                    hint: '- Space to select. Return to submit'
-                });
-
-                if (!selectedSubSkills || selectedSubSkills.length === 0) {
-                    console.log(chalk.yellow('[WARNING]'), 'No skills selected. Exiting.');
-                    process.exit(0);
+        
+        // Handle GitHub source
+        if (source === 'github') {
+            const { githubUrl } = await prompts({
+                type: 'text',
+                name: 'githubUrl',
+                message: 'Enter GitHub URL:',
+                validate: value => value.trim() !== '' || 'Please enter a valid GitHub URL'
+            });
+            
+            if (!githubUrl) {
+                console.log(chalk.yellow('[WARNING]'), 'No URL provided. Exiting.');
+                process.exit(0);
+            }
+            
+            // Use the same logic as --from flag
+            console.log(chalk.blue('[INFO]'), `Cloning from ${githubUrl}...`);
+            
+            try {
+                const { skillPath: clonedPath, targetPath, needsUpdate, hasSubpath } = await cloneOrUpdateRepo(githubUrl);
+                
+                if (needsUpdate) {
+                    const { shouldUpdate } = await prompts({
+                        type: 'confirm',
+                        name: 'shouldUpdate',
+                        message: `Repository already exists. Update with git pull?`,
+                        initial: false
+                    });
+                    
+                    if (shouldUpdate) {
+                        await pullRepo(targetPath);
+                        console.log(chalk.green('[SUCCESS]'), 'Repository updated!');
+                    }
                 }
-                skillPaths = selectedSubSkills;
+                
+                // If no subpath, check for skills/ subdirectory
+                if (!hasSubpath && dirExists(path.join(targetPath, 'skills'))) {
+                    const subSkills = listDirectories(path.join(targetPath, 'skills'));
+                    
+                    if (subSkills.length > 0) {
+                        const { selectedSkills } = await prompts({
+                            type: 'multiselect',
+                            name: 'selectedSkills',
+                            message: 'This repo contains multiple skills. Select skills to install:',
+                            choices: [
+                                ...subSkills.map(s => ({ title: s, value: path.join(targetPath, 'skills', s) })),
+                                { title: 'Link entire repo', value: targetPath }
+                            ],
+                            hint: '- Space to select. Return to submit'
+                        });
+                        
+                        if (selectedSkills && selectedSkills.length > 0) {
+                            skillPaths = selectedSkills;
+                        }
+                    } else {
+                        skillPaths = [targetPath];
+                    }
+                } else {
+                    skillPaths = [clonedPath];
+                }
+                
+                console.log(chalk.green('[SUCCESS]'), 'Clone completed!');
+            } catch (error) {
+                console.error(chalk.red('[ERROR]'), error.message);
+                process.exit(1);
+            }
+        }
+        
+        // Handle local library source
+        if (source === 'local') {
+            const repos = findRepos(DEFAULT_LIB_PATH);
+            
+            if (repos.length === 0) {
+                console.error(chalk.red('[ERROR]'), `No repos found in ${DEFAULT_LIB_PATH}`);
+                console.log(chalk.blue('[INFO]'), 'Use --from <github_url> to clone skills first.');
+                process.exit(1);
+            }
+            
+            console.log('');
+            
+            // 1. Select Repository
+            const { selectedRepo } = await prompts({
+                type: 'autocomplete',
+                name: 'selectedRepo',
+                message: 'Select a repository:',
+                choices: repos.map(repo => ({
+                    title: `${repo.name}${repo.hasSkillsDir ? chalk.dim(' (has skills/)') : ''}`,
+                    value: repo
+                })),
+                suggest: (input, choices) => {
+                    const inputLower = input.toLowerCase();
+                    return Promise.resolve(
+                        choices.filter(choice => choice.title.toLowerCase().includes(inputLower))
+                    );
+                }
+            });
+
+            if (!selectedRepo) {
+                console.log(chalk.yellow('[WARNING]'), 'No repository selected. Exiting.');
+                process.exit(0);
+            }
+
+            // 2. Select Sub-skills (if applicable)
+            if (selectedRepo.hasSkillsDir) {
+                const skillsDir = path.join(selectedRepo.path, 'skills');
+                const subSkills = listDirectories(skillsDir);
+
+                if (subSkills.length > 0) {
+                    const { selectedSubSkills } = await prompts({
+                        type: 'multiselect',
+                        name: 'selectedSubSkills',
+                        message: `Select skills from ${chalk.cyan(selectedRepo.name)} (Space to select):`,
+                        choices: [
+                            ...subSkills.map(s => ({ title: s, value: path.join(skillsDir, s) })),
+                            { title: 'Link entire repo', value: selectedRepo.path }
+                        ],
+                        hint: '- Space to select. Return to submit'
+                    });
+
+                    if (!selectedSubSkills || selectedSubSkills.length === 0) {
+                        console.log(chalk.yellow('[WARNING]'), 'No skills selected. Exiting.');
+                        process.exit(0);
+                    }
+                    skillPaths = selectedSubSkills;
+                } else {
+                    skillPaths = [selectedRepo.path];
+                }
             } else {
                 skillPaths = [selectedRepo.path];
             }
-        } else {
-            skillPaths = [selectedRepo.path];
         }
     }
 
