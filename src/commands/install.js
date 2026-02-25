@@ -6,7 +6,11 @@ const {
   createSymlink,
   listDirectories,
 } = require("../utils/file-system");
-const { getAllAgents, detectInstalledAgents } = require("../utils/agents");
+const {
+  getAllAgents,
+  detectInstalledAgents,
+  findAgentIndex,
+} = require("../utils/agents");
 const { cloneOrUpdateRepo, pullRepo } = require("../utils/git");
 
 /**
@@ -99,10 +103,8 @@ async function install(options) {
   if (options.agents && options.agents.length > 0) {
     selectedAgents = options.agents
       .map((agentName) => {
-        const idx = agents.findIndex(
-          (a) => a.name.toLowerCase() === agentName.toLowerCase(),
-        );
-        if (idx === -1) {
+        const idx = findAgentIndex(agentName);
+        if (idx === null) {
           console.log(
             chalk.yellow("[WARNING]"),
             `Unknown agent: ${agentName}, skipping...`,
