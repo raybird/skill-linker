@@ -1,45 +1,57 @@
 #!/usr/bin/env node
 
-const { program } = require('commander');
-const chalk = require('chalk');
-const install = require('./commands/install');
-const list = require('./commands/list');
+const { program } = require("commander");
+const chalk = require("chalk");
+const install = require("./commands/install");
+const list = require("./commands/list");
 
 // Package info
-const packageJson = require('../package.json');
+const packageJson = require("../package.json");
 
 program
-    .name('skill-linker')
-    .description('Interactive CLI to link AI Agent Skills to various agents')
-    .version(packageJson.version);
+  .name("skill-linker")
+  .description(
+    "CLI to link AI Agent Skills to various agents (Claude, Copilot, Antigravity, Cursor, etc.)",
+  )
+  .version(packageJson.version);
 
-// Default command (install)
+// Install command
 program
-    .argument('[skill-path]', 'Path to skill directory')
-    .option('--from <github-url>', 'Clone skill from GitHub URL first, then link')
-    .option('-l, --list', 'List available skills in library')
-    .action(async (skillPath, options) => {
-        // Handle --list flag
-        if (options.list) {
-            await list();
-            return;
-        }
-
-        // Run install command
-        await install({
-            skill: skillPath,
-            from: options.from
-        });
+  .command("install")
+  .description("Install a skill to specified agents")
+  .requiredOption(
+    "--skill <path>",
+    "Path to skill directory or --from clone URL",
+  )
+  .option("--from <github-url>", "Clone skill from GitHub URL first, then link")
+  .option(
+    "-a, --agent <names...>",
+    "Agent names to install to (opencode, claude, cursor, etc.)",
+  )
+  .option("-s, --scope <scope>", "Scope: project, global, or both")
+  .option("-y, --yes", "Skip confirmation prompts")
+  .action(async (options) => {
+    await install({
+      skill: options.skill,
+      from: options.from,
+      agents: options.agent,
+      scope: options.scope,
+      yes: options.yes || false,
     });
+  });
 
-// Standalone list command
+// List command
 program
-    .command('list')
-    .description('List all available skills in the library')
-    .action(async () => {
-        await list();
+  .command("list")
+  .description("List available skills in library")
+  .option("-r, --repo <name>", "Repository name to list skills from")
+  .option("--json", "Output as JSON")
+  .action(async (options) => {
+    await list({
+      repo: options.repo,
+      json: options.json || false,
     });
+  });
 
 // Parse command line arguments
 program.parse(process.argv);
-
