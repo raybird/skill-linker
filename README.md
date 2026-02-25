@@ -124,7 +124,7 @@ npx skill-linker list --repo skill-name --json
 | **GitHub Copilot**     | `.github/skills/`   | `~/.copilot/skills/`            |
 | **Google Antigravity** | `.agent/skills/`    | `~/.gemini/antigravity/skills/` |
 | **Cursor**             | `.cursor/skills/`   | `~/.cursor/skills/`             |
-| **OpenCode**           | `.opencode/skills/` | `~/.opencode/skills/`           |
+| **OpenCode**           | `.opencode/skills/` | `~/.config/opencode/skills/`    |
 | **OpenAI Codex**       | `.codex/skills/`    | `~/.codex/skills/`              |
 | **Gemini CLI**         | `.gemini/skills/`   | `~/.gemini/skills/`             |
 | **Windsurf**           | `.windsurf/skills/` | `~/.codeium/windsurf/skills/`   |
