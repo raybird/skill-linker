@@ -33,8 +33,8 @@ const AGENTS = [
   },
   {
     name: "OpenCode",
-    projectDir: ".opencode/skill",
-    globalDir: path.join(os.homedir(), ".config/opencode/skill"),
+    projectDir: ".opencode/skills",
+    globalDir: path.join(os.homedir(), ".opencode/skills"),
     aliases: ["opencode", "open-code"],
   },
   {
