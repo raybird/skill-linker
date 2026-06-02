@@ -74,15 +74,22 @@ function findAgentIndex(nameOrAlias) {
 }
 
 /**
- * Detect which agents are installed on the system
+ * Detect which agents are installed / in use.
+ *
+ * An agent counts as detected if EITHER its global skills directory exists,
+ * OR its project skills directory exists under the given working directory.
+ * The latter lets project-only setups be auto-detected when --agent is omitted.
+ *
+ * @param {string} [cwd] - Working directory to check project dirs against
  * @returns {Array} List of detected agent indices
  */
-function detectInstalledAgents() {
+function detectInstalledAgents(cwd = process.cwd()) {
   const installed = [];
 
   AGENTS.forEach((agent, index) => {
-    // Check if global directory exists
-    if (fs.existsSync(agent.globalDir)) {
+    const globalExists = fs.existsSync(agent.globalDir);
+    const projectExists = fs.existsSync(path.join(cwd, agent.projectDir));
+    if (globalExists || projectExists) {
       installed.push(index);
     }
   });

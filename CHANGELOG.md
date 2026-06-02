@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `list --skills` flag: flat-lists every individual skill across the whole
   library (supports `--json`).
 
+### Changed
+
+- Agent auto-detection (when `--agent` is omitted) now also detects agents by
+  their project skills directory in the current folder, not just the global
+  directory.
+
 ## [4.1.4] - 2026-06-02
 
 ### Fixed
