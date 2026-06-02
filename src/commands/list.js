@@ -14,15 +14,17 @@ const { DEFAULT_LIB_PATH } = require("../utils/git");
  * @param {string} [options.repo] - Repository name to list
  * @param {boolean} [options.skills] - List individual skills across the library
  * @param {boolean} [options.json] - Output as JSON
+ * @param {string} [options.libPath] - Library root (defaults to DEFAULT_LIB_PATH)
  */
 async function list(options = {}) {
   const repoName = options.repo;
   const outputJson = options.json || false;
+  const libPath = options.libPath || DEFAULT_LIB_PATH;
 
-  if (!dirExists(DEFAULT_LIB_PATH)) {
+  if (!dirExists(libPath)) {
     console.error(
       chalk.red("[ERROR]"),
-      `Skill library not found: ${DEFAULT_LIB_PATH}`,
+      `Skill library not found: ${libPath}`,
     );
     console.log(
       chalk.blue("[INFO]"),
@@ -31,12 +33,12 @@ async function list(options = {}) {
     process.exit(1);
   }
 
-  const repos = findRepos(DEFAULT_LIB_PATH);
+  const repos = findRepos(libPath);
 
   if (repos.length === 0) {
     console.log(
       chalk.yellow("[WARNING]"),
-      `No repos found in ${DEFAULT_LIB_PATH}`,
+      `No repos found in ${libPath}`,
     );
     console.log(
       chalk.blue("[INFO]"),
@@ -48,7 +50,7 @@ async function list(options = {}) {
   // Flat listing: every individual skill across the whole library.
   // Only applies when no specific --repo was requested.
   if (options.skills && !repoName) {
-    const skills = findSkills(DEFAULT_LIB_PATH);
+    const skills = findSkills(libPath);
 
     if (outputJson) {
       console.log(
@@ -64,7 +66,7 @@ async function list(options = {}) {
     console.log("");
     console.log(
       chalk.blue("[INFO]"),
-      `Skills in library (${DEFAULT_LIB_PATH}):`,
+      `Skills in library (${libPath}):`,
     );
     console.log("");
     skills.forEach((skill, index) => {
@@ -166,7 +168,7 @@ async function list(options = {}) {
     console.log("");
     console.log(
       chalk.blue("[INFO]"),
-      `Repositories in library (${DEFAULT_LIB_PATH}):`,
+      `Repositories in library (${libPath}):`,
     );
     console.log("");
 
