@@ -1,6 +1,6 @@
 {
   "name": "skill-linker",
-  "version": "4.1.3",
+  "version": "4.1.4",
   "description": "CLI to link AI Agent Skills to various agents (Claude, Copilot, Antigravity, Cursor, etc.)",
   "main": "bin/cli.js",
   "bin": {
