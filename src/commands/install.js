@@ -156,6 +156,9 @@ async function install(options) {
   }
   console.log(chalk.blue("[INFO]"), `Scope: ${scope}`);
 
+  let linkedCount = 0;
+  let failedCount = 0;
+
   // Process each selected agent
   for (const agentIndex of selectedAgents) {
     const agent = agents[agentIndex];
@@ -198,15 +201,27 @@ async function install(options) {
 
         if (createSymlink(sPath, targetLink)) {
           console.log(chalk.green("[SUCCESS]"), `Linked ${sName}`);
+          linkedCount++;
         } else {
           console.error(chalk.red("[ERROR]"), `Failed to link ${sName}`);
+          failedCount++;
         }
       }
     }
   }
 
   console.log("");
-  console.log(chalk.green("[SUCCESS]"), "All operations completed.");
+  if (failedCount > 0) {
+    console.error(
+      chalk.red("[ERROR]"),
+      `Completed with errors: ${linkedCount} linked, ${failedCount} failed.`,
+    );
+    process.exit(1);
+  }
+  console.log(
+    chalk.green("[SUCCESS]"),
+    `All operations completed (${linkedCount} linked).`,
+  );
 }
 
 module.exports = install;
