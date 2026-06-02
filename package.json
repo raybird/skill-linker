@@ -7,7 +7,7 @@
     "skill-linker": "bin/cli.js"
   },
   "scripts": {
-    "test": "echo \"No tests yet\""
+    "test": "node --test"
   },
   "keywords": [
     "ai",

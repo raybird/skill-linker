@@ -21,7 +21,7 @@
 
 ```bash
 # 安裝技能（需要 --skill 或 --from）
-npx /app/workspace/projects/skill-linker install --skill <路徑> --agent opencode --scope both --yes
+npx skill-linker install --skill <路徑> --agent opencode --scope both --yes
 npx skill-linker install --from https://github.com/anthropics/skills --agent claude --scope both
 
 # 列出已安裝的 Repos
@@ -159,6 +159,8 @@ npx skill-linker install --from https://github.com/obra/superpowers --agent clau
 
 1. **權限問題**：在建立 Symlink 時，請確保您有對應目錄的寫入權限。
 2. **環境需求**：需安裝 Node.js 18.0.0 以上版本。
+3. **Windows**：建立 Symlink 需開啟「開發者模式」或以系統管理員權限執行，否則 `fs.symlinkSync` 會失敗。
+4. **覆寫保護**：`--yes` 只會覆寫既有的 Symlink；若目標是「真實目錄／檔案」，工具會拒絕刪除以保護資料。
 
 ## 授權
 

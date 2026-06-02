@@ -19,10 +19,7 @@ program
 program
   .command("install")
   .description("Install a skill to specified agents")
-  .requiredOption(
-    "--skill <path>",
-    "Path to skill directory or --from clone URL",
-  )
+  .option("--skill <path>", "Path to a local skill directory")
   .option("--from <github-url>", "Clone skill from GitHub URL first, then link")
   .option(
     "-a, --agent <names...>",

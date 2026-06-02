@@ -35,9 +35,27 @@ function createSymlink(source, target) {
         // Ensure parent directory exists
         ensureDir(path.dirname(target));
 
-        // Remove existing link/file/directory if present
-        // force: true makes it ignore the error if file doesn't exist
-        fs.rmSync(target, { recursive: true, force: true });
+        // Inspect the target itself without following symlinks.
+        let stat = null;
+        try {
+            stat = fs.lstatSync(target);
+        } catch {
+            // Target does not exist — nothing to remove.
+        }
+
+        if (stat) {
+            if (stat.isSymbolicLink()) {
+                // Safe: we are replacing a link, not real content.
+                fs.rmSync(target, { force: true });
+            } else {
+                // A real file or directory lives here. Refuse to delete it so
+                // we never destroy user data that we did not create.
+                console.error(
+                    `Refusing to overwrite non-symlink target: ${target}`,
+                );
+                return false;
+            }
+        }
 
         fs.symlinkSync(source, target, 'dir');
         return true;

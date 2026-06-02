@@ -43,9 +43,7 @@ Agent selection: if `--agent` is omitted, the CLI links to *all detected* agents
 
 ## Skill self-definition
 
-This repo ships its own Agent Skill so it can install itself. The canonical, published copy is **`skills/skill-linker/SKILL.md`** (only `skills/` is listed in `package.json` `files`). `skill-linker/SKILL.md` at the repo root is a stale duplicate — prefer editing the one under `skills/`.
-
-`legacy-link-skill.sh` is the original interactive Bash implementation, superseded by the Node CLI. Keep it for reference; new behavior goes in `src/`.
+This repo ships its own Agent Skill so it can install itself. The skill lives at **`skills/skill-linker/SKILL.md`** (only `skills/` is listed in `package.json` `files`).
 
 ## Releasing
 

@@ -75,6 +75,15 @@ async function install(options) {
     skillPaths = [options.skill];
   }
 
+  // Require at least one source: --skill or --from
+  if (skillPaths.length === 0) {
+    console.error(
+      chalk.red("[ERROR]"),
+      "No skill source provided. Use --skill <path> or --from <github-url>.",
+    );
+    process.exit(1);
+  }
+
   // Validate skill paths
   for (const p of skillPaths) {
     if (!dirExists(p)) {
