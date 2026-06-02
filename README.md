@@ -6,6 +6,18 @@
 
 一個現代化的 CLI 工具，用於將 AI Agent Skills 快速連結（Symlink）到各種 AI Agent 的專案或全域目錄中。
 
+## 🤔 這是什麼？
+
+**AI Agent Skill** 是一包能擴充 AI 助手能力的檔案（例如讓 Claude 會處理 PDF、Word、Excel）。各家 AI 工具（Claude Code、Cursor、Gemini…）都會去自己的 `skills/` 目錄尋找這些技能。
+
+`skill-linker` 幫你把一份 Skill 一次**連結（symlink）**到一個或多個 AI 工具的 skills 目錄，免去手動複製、也讓日後更新一處即可同步生效。
+
+> 💡 **最快上手**：幫你的 Claude Code 安裝官方 Skills（PDF / Word / Excel / PPT 等），複製這行即可：
+>
+> ```bash
+> npx skill-linker install --from https://github.com/anthropics/skills --agent claude
+> ```
+
 ## ✨ 功能特色
 
 - **CLI 優先設計**：專為 AI Agent 打造的命令列介面，無需互動問答。
@@ -24,10 +36,10 @@
 npx skill-linker install --skill <路徑> --agent opencode --scope both --yes
 npx skill-linker install --from https://github.com/anthropics/skills --agent claude --scope both
 
-# 列出已安裝的 Repos
+# 列出 Skill Library 中的 Repos
 npx skill-linker list
-npx skill-linker list --repo skill-name
-npx skill-linker list --repo skill-name --json
+npx skill-linker list --repo anthropics/skills
+npx skill-linker list --repo anthropics/skills --json
 ```
 
 ### 方式 2：本地開發/安裝
@@ -58,50 +70,57 @@ Options:
 ### install 命令
 
 ```
-Usage: skill-linker install --skill <path>
+Usage: skill-linker install [--skill <path> | --from <github-url>] [options]
 
 Options:
-  --skill <path>         指定本地 Skill 目錄路徑（必需）
-  --from <github-url>    從 GitHub Clone 後再進行連結
-  -a, --agent <names>    指定 Agent 名稱（opencode, claude, cursor 等）
-  -s, --scope <scope>    範圍：project, global, both（預設 both）
-  -y, --yes              自動覆寫已存在的連結
+  --skill <path>          指定本地 Skill 目錄路徑
+  --from <github-url>     從 GitHub Clone 後再進行連結
+  -a, --agent <names...>  指定一個或多個 Agent 名稱（opencode claude cursor …）
+  -s, --scope <scope>     範圍：project, global, both（預設 both）
+  -y, --yes              自動覆寫已存在的連結，並在 repo 已存在時更新
 ```
+
+> `--skill` 與 `--from` 至少要提供一個（兩者皆可省略其一）。
+>
+> **`--agent` 省略時**：會自動安裝到所有「已偵測到」的 Agent —— 也就是那些全域目錄（如 `~/.claude`、`~/.cursor`）已存在於你系統上的工具。
 
 範例：
 
 ```bash
-# 指定路徑安裝到 opencode
+# 指定本地路徑安裝到 opencode
 npx skill-linker install --skill /path/to/skill --agent opencode
 
-# 從 GitHub Clone 並安裝到多個 Agents
+# 從 GitHub Clone 並一次安裝到多個 Agents
 npx skill-linker install --from https://github.com/anthropics/skills --agent claude cursor --scope both
 
-# 安裝到所有已偵測到的 Agents
+# 省略 --agent：安裝到所有已偵測到的 Agents
 npx skill-linker install --skill /path/to/skill --scope both --yes
+
+# 只安裝 multi-skill repo 中的「單一」子技能（用 GitHub 的 /tree/<branch>/<子路徑> 連結）
+npx skill-linker install --from https://github.com/anthropics/skills/tree/main/skills/pdf --agent claude
 ```
 
-### list 命令
+`list` 會掃描你的 Skill Library（`~/Documents/AgentSkills`，由 `--from` 自動建立），顯示曾經 Clone 過的 repos 與其中的 skills。
 
 ```
 Usage: skill-linker list [options]
 
 Options:
-  -r, --repo <name>   指定 Repository 名稱
+  -r, --repo <name>   指定 Repository 名稱（格式為 owner/repo）
   --json              JSON 輸出格式
 ```
 
 範例：
 
 ```bash
-# 列出所有 Repos
+# 列出 Library 中所有 Repos
 npx skill-linker list
 
-# 列出特定 Repo 的 Skills
-npx skill-linker list --repo skill-name
+# 列出特定 Repo 的 Skills（名稱為 owner/repo）
+npx skill-linker list --repo anthropics/skills
 
-# JSON 輸出
-npx skill-linker list --repo skill-name --json
+# JSON 輸出（適合腳本處理）
+npx skill-linker list --repo anthropics/skills --json
 ```
 
 ## 📂 Skill Library 管理
@@ -154,6 +173,20 @@ npx skill-linker install --from https://github.com/moltbot/skills --agent openco
 ```bash
 npx skill-linker install --from https://github.com/obra/superpowers --agent claude cursor
 ```
+
+## 🗑️ 移除已安裝的 Skill
+
+本工具目前沒有 `uninstall` 命令。由於安裝動作只是建立一個 **symlink**，要移除時直接刪掉對應 Agent skills 目錄中的那個連結即可，**不會**影響到原始的 Skill 來源：
+
+```bash
+# 例如移除 Claude Code 專案目錄中名為 pdf 的 skill
+rm .claude/skills/pdf
+
+# 或移除全域安裝
+rm ~/.claude/skills/pdf
+```
+
+各 Agent 的 skills 目錄位置請參考上方[支援的 Agent 與路徑](#-支援的-agent-與路徑)。若要刪除整份已 Clone 的來源，移除 `~/Documents/AgentSkills/<owner>/<repo>` 即可。
 
 ## ⚠️ 注意事項
 
