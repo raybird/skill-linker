@@ -41,6 +41,8 @@
     "bin/",
     "src/",
     "skills/",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
   ]
 }
