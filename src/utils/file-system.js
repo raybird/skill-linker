@@ -32,6 +32,11 @@ function ensureDir(dirPath) {
  */
 function createSymlink(source, target) {
     try {
+        // Resolve the source to an absolute path. A relative source (e.g.
+        // "./my-skill") would otherwise be stored verbatim and resolved
+        // relative to the link's own directory, producing a broken link.
+        const resolvedSource = path.resolve(source);
+
         // Ensure parent directory exists
         ensureDir(path.dirname(target));
 
@@ -57,7 +62,7 @@ function createSymlink(source, target) {
             }
         }
 
-        fs.symlinkSync(source, target, 'dir');
+        fs.symlinkSync(resolvedSource, target, 'dir');
         return true;
     } catch (error) {
         console.error(`Failed to create symlink: ${error.message}`);

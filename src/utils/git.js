@@ -13,7 +13,8 @@ const DEFAULT_LIB_PATH = path.join(os.homedir(), "Documents/AgentSkills");
 function parseGitHubUrl(url) {
   let cleanUrl = url;
   let subpath = "";
-  let branch = "main";
+  // null means "no explicit branch" — let git use the remote default.
+  let branch = null;
 
   // Check for /tree/branch/path format
   const treeMatch = url.match(/(.+)\/tree\/([^/]+)\/(.+)$/);
@@ -40,18 +41,37 @@ function parseGitHubUrl(url) {
 }
 
 /**
+ * Build the argument list for `git clone`.
+ * @param {string} url - GitHub URL
+ * @param {string} targetPath - Target directory
+ * @param {Object} [opts]
+ * @param {boolean} [opts.shallow] - Use shallow clone (default true)
+ * @param {string|null} [opts.branch] - Branch to check out, or null for default
+ * @returns {string[]} git arguments
+ */
+function buildCloneArgs(url, targetPath, { shallow = true, branch = null } = {}) {
+  const args = ["clone"];
+  if (shallow) {
+    args.push("--depth", "1");
+  }
+  if (branch) {
+    args.push("--branch", branch);
+  }
+  args.push(url, targetPath);
+  return args;
+}
+
+/**
  * Clone a GitHub repository
  * @param {string} url - GitHub URL
  * @param {string} targetPath - Target directory
  * @param {boolean} shallow - Use shallow clone (default true)
+ * @param {string|null} branch - Branch to check out, or null for default
  * @returns {Promise<void>}
  */
-async function cloneRepo(url, targetPath, shallow = true) {
+async function cloneRepo(url, targetPath, shallow = true, branch = null) {
   try {
-    const args = shallow
-      ? ["clone", "--depth", "1", url, targetPath]
-      : ["clone", url, targetPath];
-    await execa("git", args);
+    await execa("git", buildCloneArgs(url, targetPath, { shallow, branch }));
   } catch (error) {
     throw new Error(`Failed to clone repository: ${error.message}`);
   }
@@ -85,8 +105,8 @@ async function cloneOrUpdateRepo(url) {
     // Repo exists, ask if user wants to update
     needsUpdate = true;
   } else {
-    // Clone new repo
-    await cloneRepo(parsed.cleanUrl, targetPath);
+    // Clone new repo (honour an explicit branch from /tree/<branch>/ URLs)
+    await cloneRepo(parsed.cleanUrl, targetPath, true, parsed.branch);
   }
 
   // Determine final skill path
@@ -106,6 +126,7 @@ async function cloneOrUpdateRepo(url) {
 module.exports = {
   DEFAULT_LIB_PATH,
   parseGitHubUrl,
+  buildCloneArgs,
   cloneRepo,
   pullRepo,
   cloneOrUpdateRepo,

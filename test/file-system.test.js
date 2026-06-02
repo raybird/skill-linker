@@ -31,6 +31,28 @@ test("createSymlink: links a source directory", () => {
   assert.strictEqual(fs.realpathSync(target), fs.realpathSync(src));
 });
 
+test("createSymlink: resolves a relative source into a working link", () => {
+  // Regression: a relative source must not be stored verbatim, or the link
+  // resolves relative to its own directory and breaks.
+  const cwd = process.cwd();
+  try {
+    process.chdir(tmp);
+    fs.mkdirSync("rel-skill");
+    fs.writeFileSync(path.join("rel-skill", "SKILL.md"), "content");
+    const target = path.join(tmp, "links", "rel-skill");
+
+    assert.strictEqual(createSymlink("./rel-skill", target), true);
+    // The link must be readable through, i.e. it points at the real dir.
+    assert.strictEqual(
+      fs.readFileSync(path.join(target, "SKILL.md"), "utf8"),
+      "content",
+    );
+    assert.strictEqual(path.isAbsolute(fs.readlinkSync(target)), true);
+  } finally {
+    process.chdir(cwd);
+  }
+});
+
 test("createSymlink: replaces an existing symlink", () => {
   const oldSrc = path.join(tmp, "old");
   const newSrc = path.join(tmp, "new");
