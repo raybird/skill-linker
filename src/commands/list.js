@@ -2,6 +2,7 @@ const chalk = require("chalk");
 const path = require("path");
 const {
   findRepos,
+  findSkills,
   listDirectories,
   dirExists,
 } = require("../utils/file-system");
@@ -11,6 +12,7 @@ const { DEFAULT_LIB_PATH } = require("../utils/git");
  * List command - shows repos and skills (CLI mode only)
  * @param {Object} options - Command options
  * @param {string} [options.repo] - Repository name to list
+ * @param {boolean} [options.skills] - List individual skills across the library
  * @param {boolean} [options.json] - Output as JSON
  */
 async function list(options = {}) {
@@ -40,6 +42,36 @@ async function list(options = {}) {
       chalk.blue("[INFO]"),
       "Use --from <github_url> to clone skills first.",
     );
+    return;
+  }
+
+  // Flat listing: every individual skill across the whole library.
+  // Only applies when no specific --repo was requested.
+  if (options.skills && !repoName) {
+    const skills = findSkills(DEFAULT_LIB_PATH);
+
+    if (outputJson) {
+      console.log(
+        JSON.stringify(
+          skills.map((s) => ({ name: s.name, path: s.path })),
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
+    console.log("");
+    console.log(
+      chalk.blue("[INFO]"),
+      `Skills in library (${DEFAULT_LIB_PATH}):`,
+    );
+    console.log("");
+    skills.forEach((skill, index) => {
+      console.log(`  ${index + 1}. ${chalk.cyan(skill.name)}`);
+      console.log(`     ${chalk.dim(skill.path)}`);
+    });
+    console.log("");
     return;
   }
 

@@ -107,6 +107,7 @@ Usage: skill-linker list [options]
 
 Options:
   -r, --repo <name>   指定 Repository 名稱（格式為 owner/repo）
+  --skills            平鋪列出整個 Library 中的每一個 skill
   --json              JSON 輸出格式
 ```
 
@@ -115,6 +116,9 @@ Options:
 ```bash
 # 列出 Library 中所有 Repos
 npx skill-linker list
+
+# 平鋪列出所有 repo 底下的每一個 skill（owner/repo/skill）
+npx skill-linker list --skills
 
 # 列出特定 Repo 的 Skills（名稱為 owner/repo）
 npx skill-linker list --repo anthropics/skills

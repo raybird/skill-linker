@@ -42,10 +42,12 @@ program
   .command("list")
   .description("List available skills in library")
   .option("-r, --repo <name>", "Repository name to list skills from")
+  .option("--skills", "List every individual skill across the whole library")
   .option("--json", "Output as JSON")
   .action(async (options) => {
     await list({
       repo: options.repo,
+      skills: options.skills || false,
       json: options.json || false,
     });
   });
